@@ -1,0 +1,1193 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>欠款記帳｜IOU Ledger</title>
+  <style>
+    :root{
+      --bg:#0b0f19;
+      --card:#121a2a;
+      --card2:#0f1626;
+      --text:#e7eefc;
+      --muted:#a9b6d6;
+      --line:#25314d;
+      --good:#4ade80;
+      --bad:#fb7185;
+      --warn:#fbbf24;
+      --btn:#3b82f6;
+      --btn2:#1f2937;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", Arial;
+      background: radial-gradient(1200px 800px at 20% 0%, #172554 0%, var(--bg) 50%, #050814 100%);
+      color:var(--text);
+    }
+    .app{
+      max-width: 460px;
+      margin: 0 auto;
+      min-height: 100vh;
+      padding: 18px 14px 92px;
+    }
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:10px;
+      margin-bottom: 14px;
+    }
+    .title{
+      font-weight: 800;
+      letter-spacing: .3px;
+      font-size: 18px;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .badge{
+      font-size: 12px;
+      padding: 4px 8px;
+      background: rgba(59,130,246,.18);
+      border: 1px solid rgba(59,130,246,.35);
+      color: #b7d1ff;
+      border-radius: 999px;
+    }
+    .iconbtn{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 14px;
+      cursor:pointer;
+      box-shadow: 0 6px 16px rgba(0,0,0,.2);
+    }
+    .iconbtn:active{transform: translateY(1px)}
+    .cards{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border:1px solid rgba(37,49,77,.9);
+      border-radius: var(--radius);
+      padding: 14px 14px;
+      box-shadow: var(--shadow);
+    }
+    .card h3{
+      margin: 0 0 8px;
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 700;
+      letter-spacing:.2px;
+    }
+    .money{
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing:.2px;
+    }
+    .money.good{color: var(--good)}
+    .money.bad{color: var(--bad)}
+    .search{
+      margin: 10px 0 12px;
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+    .input{
+      width: 100%;
+      background: rgba(255,255,255,.03);
+      border:1px solid var(--line);
+      color: var(--text);
+      border-radius: 14px;
+      padding: 12px 12px;
+      outline: none;
+    }
+    .input::placeholder{color:#7f8db2}
+    .list{
+      background: rgba(255,255,255,.02);
+      border:1px solid rgba(37,49,77,.8);
+      border-radius: var(--radius);
+      overflow:hidden;
+      box-shadow: var(--shadow);
+    }
+    .row{
+      padding: 12px 14px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      border-top: 1px solid rgba(37,49,77,.7);
+      cursor:pointer;
+    }
+    .row:first-child{border-top:none}
+    .row:active{background: rgba(255,255,255,.03)}
+    .row .name{
+      font-weight: 800;
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+    .row .sub{
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .pill{
+      font-weight: 900;
+      font-size: 14px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(37,49,77,.9);
+      background: rgba(255,255,255,.02);
+      min-width: 110px;
+      text-align:right;
+    }
+    .pill.good{color: var(--good)}
+    .pill.bad{color: var(--bad)}
+    .fab{
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      width: 56px;
+      height: 56px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, rgba(59,130,246,1), rgba(37,99,235,1));
+      color: white;
+      border: none;
+      font-size: 28px;
+      font-weight: 900;
+      box-shadow: 0 18px 35px rgba(59,130,246,.35);
+      cursor:pointer;
+    }
+    .fab:active{transform: translateY(1px)}
+    .nav{
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 12px;
+      width: min(460px, calc(100% - 28px));
+      display:flex;
+      gap:10px;
+      padding: 10px;
+      border-radius: 18px;
+      border:1px solid rgba(37,49,77,.9);
+      background: rgba(18,26,42,.85);
+      backdrop-filter: blur(8px);
+    }
+    .nav button{
+      flex:1;
+      padding: 10px 10px;
+      border-radius: 14px;
+      border:1px solid rgba(37,49,77,.9);
+      background: rgba(255,255,255,.02);
+      color: var(--text);
+      cursor:pointer;
+      font-weight: 800;
+      font-size: 13px;
+    }
+    .nav button.active{
+      background: rgba(59,130,246,.20);
+      border-color: rgba(59,130,246,.40);
+      color:#cfe1ff;
+    }
+    /* Modal */
+    .modal{
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.55);
+      display:none;
+      align-items:flex-end;
+      justify-content:center;
+      padding: 16px;
+      z-index: 50;
+    }
+    .sheet{
+      width: min(460px, 100%);
+      background: linear-gradient(180deg, rgba(18,26,42,1), rgba(15,22,38,1));
+      border:1px solid rgba(37,49,77,.95);
+      border-radius: 22px;
+      box-shadow: 0 30px 80px rgba(0,0,0,.6);
+      overflow:hidden;
+    }
+    .sheet header{
+      padding: 14px 14px 10px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      border-bottom: 1px solid rgba(37,49,77,.75);
+    }
+    .sheet header h2{
+      margin:0;
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing:.2px;
+    }
+    .sheet header .x{
+      border:none;
+      background: rgba(255,255,255,.04);
+      border:1px solid rgba(37,49,77,.9);
+      color: var(--text);
+      width: 38px;
+      height: 38px;
+      border-radius: 14px;
+      cursor:pointer;
+      font-weight: 900;
+    }
+    .sheet .content{
+      padding: 14px;
+      max-height: 72vh;
+      overflow:auto;
+    }
+    .grid{
+      display:grid;
+      gap:10px;
+    }
+    .two{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    label{
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 800;
+      display:block;
+      margin: 0 0 6px;
+    }
+    .select{
+      width: 100%;
+      background: rgba(255,255,255,.03);
+      border:1px solid var(--line);
+      color: var(--text);
+      border-radius: 14px;
+      padding: 12px 12px;
+      outline:none;
+    }
+    .btnrow{
+      display:flex;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .btn{
+      flex:1;
+      padding: 12px 12px;
+      border-radius: 14px;
+      border:1px solid rgba(37,49,77,.9);
+      background: rgba(255,255,255,.02);
+      color: var(--text);
+      cursor:pointer;
+      font-weight: 900;
+    }
+    .btn.primary{
+      background: rgba(59,130,246,.22);
+      border-color: rgba(59,130,246,.45);
+      color: #d7e7ff;
+    }
+    .btn.danger{
+      background: rgba(251,113,133,.15);
+      border-color: rgba(251,113,133,.35);
+      color: #ffd2da;
+    }
+    .hint{
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.45;
+      margin-top: 8px;
+    }
+    .splitTable{
+      margin-top: 10px;
+      border:1px solid rgba(37,49,77,.8);
+      border-radius: 16px;
+      overflow:hidden;
+      background: rgba(255,255,255,.02);
+    }
+    .splitRow{
+      display:grid;
+      grid-template-columns: 1.3fr 1fr 42px;
+      gap: 10px;
+      padding: 10px;
+      border-top: 1px solid rgba(37,49,77,.7);
+      align-items:center;
+    }
+    .splitRow:first-child{border-top:none}
+    .smallbtn{
+      width: 40px;
+      height: 40px;
+      border-radius: 14px;
+      border:1px solid rgba(37,49,77,.9);
+      background: rgba(255,255,255,.02);
+      color: var(--text);
+      cursor:pointer;
+      font-weight: 900;
+    }
+    .tag{
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      font-size: 12px;
+      color: #cfe1ff;
+      border:1px solid rgba(59,130,246,.35);
+      background: rgba(59,130,246,.14);
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-weight: 800;
+      margin: 8px 0 0;
+    }
+    .ledgerHeader{
+      display:flex;
+      flex-direction:column;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .ledgerTitle{
+      font-size: 16px;
+      font-weight: 950;
+    }
+    .ledgerBalance{
+      font-size: 18px;
+      font-weight: 950;
+    }
+    .ledgerBalance.good{color: var(--good)}
+    .ledgerBalance.bad{color: var(--bad)}
+    .tx{
+      padding: 12px 14px;
+      border-top: 1px solid rgba(37,49,77,.7);
+    }
+    .tx:first-child{border-top:none}
+    .txTop{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap: 10px;
+    }
+    .txName{
+      font-weight: 900;
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+    .txMeta{font-size: 12px; color: var(--muted); font-weight: 700}
+    .txAmt{
+      font-weight: 950;
+      text-align:right;
+      min-width: 110px;
+    }
+    .txAmt.good{color: var(--good)}
+    .txAmt.bad{color: var(--bad)}
+    .txNote{
+      margin-top: 6px;
+      font-size: 12px;
+      color: #c7d2fe;
+      opacity:.95;
+    }
+    .txActions{
+      margin-top: 10px;
+      display:flex;
+      gap: 10px;
+    }
+    .tiny{
+      flex: 0 0 auto;
+      padding: 8px 10px;
+      border-radius: 12px;
+      border:1px solid rgba(37,49,77,.9);
+      background: rgba(255,255,255,.02);
+      color: var(--text);
+      cursor:pointer;
+      font-weight: 900;
+      font-size: 12px;
+    }
+    .toast{
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 88px;
+      z-index: 60;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border:1px solid rgba(37,49,77,.95);
+      background: rgba(18,26,42,.92);
+      color: var(--text);
+      font-weight: 800;
+      font-size: 13px;
+      box-shadow: 0 20px 50px rgba(0,0,0,.5);
+      display:none;
+    }
+    .muted{color: var(--muted)}
+    .warn{color: var(--warn)}
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <div class="topbar">
+      <div class="title">欠款記帳 <span class="badge">IOU</span></div>
+      <button class="iconbtn" id="btnReset" title="清空資料">重置</button>
+    </div>
+
+    <div id="viewDashboard">
+      <div class="cards">
+        <div class="card">
+          <h3>別人欠我</h3>
+          <div class="money good" id="sumOwedToMe">NT$ 0.00</div>
+          <div class="hint">（所有 balance &gt; 0 加總）</div>
+        </div>
+        <div class="card">
+          <h3>我欠別人</h3>
+          <div class="money bad" id="sumIOwe">NT$ 0.00</div>
+          <div class="hint">（所有 balance &lt; 0 絕對值加總）</div>
+        </div>
+      </div>
+
+      <div class="search">
+        <input class="input" id="searchPeople" placeholder="搜尋人名… 例如：阿明" />
+        <button class="iconbtn" id="btnAddPerson" title="新增人">＋人</button>
+      </div>
+
+      <div class="list" id="peopleList"></div>
+      <div class="hint muted" style="margin-top:10px">
+        小提示：balance &gt; 0 代表「他欠你」，balance &lt; 0 代表「你欠他」(๑•̀ㅂ•́)و✧
+      </div>
+    </div>
+
+    <div id="viewLedger" style="display:none;">
+      <button class="iconbtn" id="btnBack">← 返回</button>
+      <div class="card" style="margin-top:12px;">
+        <div class="ledgerHeader">
+          <div class="ledgerTitle" id="ledgerName">—</div>
+          <div class="ledgerBalance" id="ledgerBalance">—</div>
+          <div class="tag" id="ledgerTag" style="display:none;"></div>
+        </div>
+        <div class="btnrow">
+          <button class="btn primary" id="btnQuickLend">他欠我</button>
+          <button class="btn primary" id="btnQuickBorrow">我欠他</button>
+        </div>
+        <div class="btnrow">
+          <button class="btn" id="btnQuickRepayToMe">他還我</button>
+          <button class="btn" id="btnQuickRepayByMe">我還他</button>
+        </div>
+        <div class="hint">你也可以用「＋」做多人分帳（你代墊 → 多人欠你）。</div>
+      </div>
+
+      <div class="list" id="txList" style="margin-top:12px;"></div>
+    </div>
+  </div>
+
+  <!-- Bottom nav -->
+  <div class="nav">
+    <button id="navHome" class="active">總覽</button>
+    <button id="navAdd">新增分帳</button>
+  </div>
+  <button class="fab" id="fab">＋</button>
+
+  <!-- Modal: Add Person -->
+  <div class="modal" id="modalPerson">
+    <div class="sheet">
+      <header>
+        <h2>新增人</h2>
+        <button class="x" data-close="modalPerson">✕</button>
+      </header>
+      <div class="content">
+        <div class="grid">
+          <div>
+            <label>人名</label>
+            <input class="input" id="personName" placeholder="例如：阿明" />
+            <div class="hint">人名重複會自動合併到同一人（用同名視為同一人）</div>
+          </div>
+          <div class="btnrow">
+            <button class="btn" data-close="modalPerson">取消</button>
+            <button class="btn primary" id="savePerson">新增</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Add Split (group lend only) -->
+  <div class="modal" id="modalSplit">
+    <div class="sheet">
+      <header>
+        <h2>新增分帳（你代墊 → 他們欠你）</h2>
+        <button class="x" data-close="modalSplit">✕</button>
+      </header>
+      <div class="content">
+        <div class="grid">
+          <div class="two">
+            <div>
+              <label>群組名稱</label>
+              <input class="input" id="splitTitle" placeholder="例如：晚餐 / 飲料" />
+            </div>
+            <div>
+              <label>日期</label>
+              <input class="input" id="splitDate" type="date" />
+            </div>
+          </div>
+          <div>
+            <label>備註（可空）</label>
+            <input class="input" id="splitNote" placeholder="例如：在XX吃飯" />
+          </div>
+
+          <div>
+            <label>分帳清單（每人各自輸入金額，可小數）</label>
+            <div class="splitTable" id="splitTable"></div>
+            <div class="btnrow">
+              <button class="btn" id="addSplitRow">＋新增一列</button>
+              <button class="btn" id="add3Rows">＋＋三列</button>
+            </div>
+            <div class="hint">金額建議輸入到小數點後兩位（例如 99.50）。</div>
+          </div>
+
+          <div class="card" style="background:rgba(255,255,255,.02); box-shadow:none;">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+              <div class="muted" style="font-weight:800;">合計（所有列金額加總）</div>
+              <div class="money" id="splitTotal">NT$ 0.00</div>
+            </div>
+            <div class="hint">送出後會自動拆成多筆「他欠我」交易並更新每個人的餘額。</div>
+          </div>
+
+          <div class="btnrow">
+            <button class="btn" data-close="modalSplit">取消</button>
+            <button class="btn primary" id="saveSplit">確認新增</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Quick Tx (single person) -->
+  <div class="modal" id="modalQuickTx">
+    <div class="sheet">
+      <header>
+        <h2 id="quickTitle">新增紀錄</h2>
+        <button class="x" data-close="modalQuickTx">✕</button>
+      </header>
+      <div class="content">
+        <div class="grid">
+          <div class="two">
+            <div>
+              <label>人</label>
+              <select class="select" id="quickPerson"></select>
+            </div>
+            <div>
+              <label>日期</label>
+              <input class="input" id="quickDate" type="date" />
+            </div>
+          </div>
+          <div class="two">
+            <div>
+              <label>類型</label>
+              <select class="select" id="quickType">
+                <option value="lend">他欠我（你借/你代墊）</option>
+                <option value="borrow">我欠他（你借錢/他代墊）</option>
+                <option value="repay_to_me">他還我</option>
+                <option value="repay_by_me">我還他</option>
+              </select>
+            </div>
+            <div>
+              <label>金額</label>
+              <input class="input" id="quickAmount" inputmode="decimal" placeholder="例如 120.50" />
+            </div>
+          </div>
+          <div>
+            <label>備註（可空）</label>
+            <input class="input" id="quickNote" placeholder="例如：借餐費 / 轉帳" />
+          </div>
+          <div class="btnrow">
+            <button class="btn" data-close="modalQuickTx">取消</button>
+            <button class="btn primary" id="saveQuickTx">新增</button>
+          </div>
+          <div class="hint">
+            規則：<span class="good">他欠我 +</span> / <span class="bad">我欠他 -</span> / 還款會把欠款往 0 拉近 (ง •̀_•́)ง
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  // ---------- Utilities ----------
+  const $ = (sel) => document.querySelector(sel);
+  const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+
+  const todayISO = () => {
+    const d = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  };
+
+  // Money: store in cents (integer) to avoid float issues
+  const parseToCents = (s) => {
+    if (typeof s !== 'string') s = String(s ?? '');
+    s = s.trim().replace(/,/g,'');
+    if (!s) return null;
+    if (!/^\d+(\.\d{0,2})?$/.test(s)) return null;
+    const [a,b=''] = s.split('.');
+    const cents = Number(a) * 100 + Number((b + '00').slice(0,2));
+    return Number.isFinite(cents) ? cents : null;
+  };
+
+  const centsToText = (cents) => {
+    const sign = cents < 0 ? '-' : '';
+    cents = Math.abs(cents);
+    const a = Math.floor(cents / 100);
+    const b = String(cents % 100).padStart(2, '0');
+    return `${sign}NT$ ${a.toLocaleString('en-US')}.${b}`;
+  };
+
+  const fmtDate = (iso) => {
+    if (!iso) return '';
+    // show as YYYY/MM/DD
+    const [y,m,d] = iso.split('-');
+    return `${y}/${m}/${d}`;
+  };
+
+  const uid = (prefix='id') => `${prefix}_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+
+  const toast = (msg) => {
+    const el = $('#toast');
+    el.textContent = msg;
+    el.style.display = 'block';
+    clearTimeout(toast._t);
+    toast._t = setTimeout(()=>{ el.style.display = 'none'; }, 1800);
+  };
+
+  // ---------- Storage ----------
+  const KEY = 'iou_ledger_v1';
+  const defaultState = () => ({
+    contacts: [
+      // demo-ish initial (optional). We'll keep empty to be clean.
+    ],
+    transactions: [],
+    groups: []
+  });
+
+  const load = () => {
+    try{
+      const raw = localStorage.getItem(KEY);
+      if (!raw) return defaultState();
+      const s = JSON.parse(raw);
+      if (!s || typeof s !== 'object') return defaultState();
+      s.contacts = Array.isArray(s.contacts) ? s.contacts : [];
+      s.transactions = Array.isArray(s.transactions) ? s.transactions : [];
+      s.groups = Array.isArray(s.groups) ? s.groups : [];
+      return s;
+    }catch(e){
+      return defaultState();
+    }
+  };
+
+  const save = () => {
+    localStorage.setItem(KEY, JSON.stringify(state));
+  };
+
+  // ---------- Domain logic ----------
+  // balance is in cents
+  const ensureContactByName = (name) => {
+    name = String(name || '').trim();
+    if (!name) return null;
+    const existing = state.contacts.find(c => c.name === name);
+    if (existing) return existing;
+    const c = { id: uid('p'), name, balance: 0, createdAt: Date.now() };
+    state.contacts.push(c);
+    save();
+    return c;
+  };
+
+  const getContact = (id) => state.contacts.find(c => c.id === id) || null;
+
+  const adjustBalance = (personId, type, amountCents) => {
+    const c = getContact(personId);
+    if (!c) return;
+
+    // balance > 0 : they owe you
+    // type impact:
+    // lend: +amount
+    // borrow: -amount
+    // repay_to_me: -amount
+    // repay_by_me: +amount
+    let delta = 0;
+    switch(type){
+      case 'lend': delta = +amountCents; break;
+      case 'borrow': delta = -amountCents; break;
+      case 'repay_to_me': delta = -amountCents; break;
+      case 'repay_by_me': delta = +amountCents; break;
+      default: delta = 0;
+    }
+    c.balance += delta;
+  };
+
+  const typeLabel = (type) => ({
+    lend: '他欠我',
+    borrow: '我欠他',
+    repay_to_me: '他還我',
+    repay_by_me: '我還他'
+  }[type] || type);
+
+  const typeEffectSign = (type) => (type === 'borrow' || type === 'repay_to_me') ? '-' : '+';
+
+  const addTransaction = ({personId, type, amountCents, dateISO, note, groupId=null}) => {
+    const tx = {
+      id: uid('tx'),
+      personId,
+      type,
+      amountCents,
+      dateISO,
+      note: note || '',
+      groupId,
+      createdAt: Date.now()
+    };
+    state.transactions.push(tx);
+    adjustBalance(personId, type, amountCents);
+    save();
+    return tx;
+  };
+
+  const deleteTransaction = (txId) => {
+    const idx = state.transactions.findIndex(t => t.id === txId);
+    if (idx < 0) return false;
+    const tx = state.transactions[idx];
+    // reverse its effect on balance
+    const c = getContact(tx.personId);
+    if (c){
+      // subtract the original delta
+      adjustBalance(tx.personId, tx.type, -tx.amountCents);
+    }
+    state.transactions.splice(idx, 1);
+    save();
+    return true;
+  };
+
+  const upsertGroup = ({title, dateISO, note, members}) => {
+    const total = members.reduce((s, m) => s + m.amountCents, 0);
+    const g = {
+      id: uid('g'),
+      title: title || '分帳',
+      dateISO,
+      note: note || '',
+      totalCents: total,
+      members: members.map(m => ({ personId: m.personId, amountCents: m.amountCents }))
+    };
+    state.groups.push(g);
+    save();
+    return g;
+  };
+
+  const sumOwedToMe = () => state.contacts
+    .filter(c => c.balance > 0)
+    .reduce((s,c)=>s+c.balance,0);
+
+  const sumIOwe = () => state.contacts
+    .filter(c => c.balance < 0)
+    .reduce((s,c)=>s+Math.abs(c.balance),0);
+
+  // ---------- UI State ----------
+  let state = load();
+  let currentView = 'dashboard'; // 'dashboard' | 'ledger'
+  let currentPersonId = null;
+
+  // ---------- Render ----------
+  const renderDashboard = () => {
+    $('#sumOwedToMe').textContent = centsToText(sumOwedToMe());
+    $('#sumIOwe').textContent = centsToText(sumIOwe());
+
+    const q = ($('#searchPeople').value || '').trim().toLowerCase();
+    const list = $('#peopleList');
+    list.innerHTML = '';
+
+    const people = [...state.contacts]
+      .sort((a,b) => Math.abs(b.balance) - Math.abs(a.balance) || (a.name.localeCompare(b.name,'zh-Hant')))
+      .filter(c => !q || c.name.toLowerCase().includes(q));
+
+    if (people.length === 0){
+      const empty = document.createElement('div');
+      empty.className = 'row';
+      empty.style.cursor = 'default';
+      empty.innerHTML = `
+        <div class="name">
+          <div>目前還沒有任何人</div>
+          <div class="sub">按右下角「＋」新增分帳，或按「＋人」新增人</div>
+        </div>
+        <div class="pill muted">(・ω・)</div>
+      `;
+      list.appendChild(empty);
+      return;
+    }
+
+    for (const p of people){
+      const row = document.createElement('div');
+      row.className = 'row';
+      row.dataset.personId = p.id;
+
+      const sub = p.balance === 0 ? '已結清' : (p.balance > 0 ? '他欠你' : '你欠他');
+      const pillClass = p.balance > 0 ? 'pill good' : (p.balance < 0 ? 'pill bad' : 'pill muted');
+
+      row.innerHTML = `
+        <div class="name">
+          <div>${escapeHTML(p.name)}</div>
+          <div class="sub">${sub}</div>
+        </div>
+        <div class="${pillClass}">${centsToText(p.balance)}</div>
+      `;
+      row.addEventListener('click', () => openLedger(p.id));
+      list.appendChild(row);
+    }
+  };
+
+  const renderLedger = (personId) => {
+    const p = getContact(personId);
+    if (!p) return;
+
+    $('#ledgerName').textContent = p.name;
+    const bal = p.balance;
+    const balEl = $('#ledgerBalance');
+    const text = bal === 0
+      ? `已結清：${centsToText(0)}`
+      : (bal > 0 ? `他欠你：${centsToText(bal)}` : `你欠他：${centsToText(bal)}`);
+    balEl.textContent = text;
+    balEl.className = 'ledgerBalance ' + (bal > 0 ? 'good' : (bal < 0 ? 'bad' : ''));
+
+    // tag info if you want
+    const tag = $('#ledgerTag');
+    tag.style.display = 'none';
+    tag.textContent = '';
+
+    const list = $('#txList');
+    list.innerHTML = '';
+
+    const txs = state.transactions
+      .filter(t => t.personId === personId)
+      .sort((a,b)=> (b.dateISO || '').localeCompare(a.dateISO || '') || b.createdAt - a.createdAt);
+
+    if (txs.length === 0){
+      const empty = document.createElement('div');
+      empty.className = 'row';
+      empty.style.cursor='default';
+      empty.innerHTML = `
+        <div class="name">
+          <div>還沒有明細</div>
+          <div class="sub">用上方按鈕新增「他欠我 / 我欠他 / 還款」</div>
+        </div>
+        <div class="pill muted">:)</div>
+      `;
+      list.appendChild(empty);
+      return;
+    }
+
+    for (const t of txs){
+      const amountSigned = (t.type === 'borrow' || t.type === 'repay_to_me') ? -t.amountCents : +t.amountCents;
+      const amtClass = amountSigned >= 0 ? 'txAmt good' : 'txAmt bad';
+      const amtText = (amountSigned >= 0 ? '+' : '-') + centsToText(Math.abs(amountSigned)).replace('NT$ ', 'NT$ ');
+
+      const wrap = document.createElement('div');
+      wrap.className = 'tx';
+
+      const g = t.groupId ? state.groups.find(g=>g.id===t.groupId) : null;
+      const metaParts = [
+        fmtDate(t.dateISO),
+        typeLabel(t.type)
+      ];
+      if (g) metaParts.push(`群組：${g.title}`);
+
+      wrap.innerHTML = `
+        <div class="txTop">
+          <div class="txName">
+            <div>${metaParts.join(' · ')}</div>
+            <div class="txMeta">${t.id.slice(-6)}${t.groupId ? ` · ${t.groupId.slice(-6)}` : ''}</div>
+          </div>
+          <div class="${amtClass}">${amtText}</div>
+        </div>
+        ${t.note ? `<div class="txNote">備註：${escapeHTML(t.note)}</div>` : ''}
+        <div class="txActions">
+          <button class="tiny danger" data-del="${t.id}">刪除</button>
+        </div>
+      `;
+
+      wrap.querySelector('[data-del]')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (confirm('確定刪除這筆紀錄嗎？（餘額會回復）')) {
+          deleteTransaction(t.id);
+          toast('已刪除');
+          renderAll();
+        }
+      });
+
+      list.appendChild(wrap);
+    }
+  };
+
+  const renderAll = () => {
+    if (currentView === 'dashboard'){
+      $('#viewDashboard').style.display = '';
+      $('#viewLedger').style.display = 'none';
+      $('#navHome').classList.add('active');
+      $('#navAdd').classList.remove('active');
+      renderDashboard();
+    } else {
+      $('#viewDashboard').style.display = 'none';
+      $('#viewLedger').style.display = '';
+      $('#navHome').classList.remove('active');
+      $('#navAdd').classList.remove('active');
+      renderLedger(currentPersonId);
+    }
+    refreshQuickPersonOptions();
+  };
+
+  // ---------- Helpers ----------
+  function escapeHTML(str){
+    return String(str)
+      .replaceAll('&','&amp;')
+      .replaceAll('<','&lt;')
+      .replaceAll('>','&gt;')
+      .replaceAll('"','&quot;')
+      .replaceAll("'","&#39;");
+  }
+
+  const openModal = (id) => { $('#'+id).style.display = 'flex'; };
+  const closeModal = (id) => { $('#'+id).style.display = 'none'; };
+
+  // ---------- Split Rows UI ----------
+  const buildSplitRow = ({name='', amount=''}={}) => {
+    const row = document.createElement('div');
+    row.className = 'splitRow';
+    row.innerHTML = `
+      <div>
+        <input class="input splitName" placeholder="人名（可新增）" value="${escapeHTML(name)}" />
+      </div>
+      <div>
+        <input class="input splitAmt" inputmode="decimal" placeholder="金額" value="${escapeHTML(amount)}" />
+      </div>
+      <button class="smallbtn" title="刪除">🗑️</button>
+    `;
+    row.querySelector('button').addEventListener('click', () => {
+      row.remove();
+      updateSplitTotal();
+    });
+    row.querySelector('.splitName').addEventListener('input', updateSplitTotal);
+    row.querySelector('.splitAmt').addEventListener('input', updateSplitTotal);
+    return row;
+  };
+
+  const updateSplitTotal = () => {
+    const rows = $$('#splitTable .splitRow');
+    let total = 0;
+    for (const r of rows){
+      const amt = parseToCents(r.querySelector('.splitAmt').value);
+      if (amt !== null) total += amt;
+    }
+    $('#splitTotal').textContent = centsToText(total);
+  };
+
+  const initSplitForm = () => {
+    $('#splitTitle').value = '';
+    $('#splitDate').value = todayISO();
+    $('#splitNote').value = '';
+    const table = $('#splitTable');
+    table.innerHTML = '';
+    table.appendChild(buildSplitRow());
+    table.appendChild(buildSplitRow());
+    updateSplitTotal();
+  };
+
+  // ---------- Quick Tx UI ----------
+  const refreshQuickPersonOptions = () => {
+    const sel = $('#quickPerson');
+    const current = sel.value;
+    sel.innerHTML = '';
+
+    const contacts = [...state.contacts].sort((a,b)=>a.name.localeCompare(b.name,'zh-Hant'));
+    for (const c of contacts){
+      const opt = document.createElement('option');
+      opt.value = c.id;
+      opt.textContent = c.name;
+      sel.appendChild(opt);
+    }
+    if (contacts.length === 0){
+      const opt = document.createElement('option');
+      opt.value = '';
+      opt.textContent = '（請先新增人）';
+      sel.appendChild(opt);
+    } else if (contacts.some(c=>c.id===current)){
+      sel.value = current;
+    }
+  };
+
+  const openQuickTx = ({personId=null, type='lend'}) => {
+    refreshQuickPersonOptions();
+    $('#quickDate').value = todayISO();
+    $('#quickType').value = type;
+    $('#quickAmount').value = '';
+    $('#quickNote').value = '';
+
+    if (personId){
+      $('#quickPerson').value = personId;
+      const p = getContact(personId);
+      $('#quickTitle').textContent = `新增紀錄：${p ? p.name : ''}`;
+    } else {
+      $('#quickTitle').textContent = '新增紀錄';
+    }
+
+    openModal('modalQuickTx');
+  };
+
+  // ---------- Navigation ----------
+  const openDashboard = () => {
+    currentView = 'dashboard';
+    currentPersonId = null;
+    renderAll();
+  };
+
+  const openLedger = (personId) => {
+    currentView = 'ledger';
+    currentPersonId = personId;
+    renderAll();
+  };
+
+  // ---------- Events ----------
+  $('#searchPeople').addEventListener('input', renderDashboard);
+
+  $('#btnAddPerson').addEventListener('click', () => {
+    $('#personName').value = '';
+    openModal('modalPerson');
+    setTimeout(()=>$('#personName').focus(), 50);
+  });
+
+  $('#savePerson').addEventListener('click', () => {
+    const name = ($('#personName').value || '').trim();
+    if (!name) return toast('人名不能空 (・ω・)');
+    ensureContactByName(name);
+    closeModal('modalPerson');
+    toast('已新增');
+    renderAll();
+  });
+
+  $('#fab').addEventListener('click', () => {
+    // If on ledger, still allow split (group) by default.
+    initSplitForm();
+    openModal('modalSplit');
+  });
+
+  $('#navHome').addEventListener('click', openDashboard);
+
+  $('#navAdd').addEventListener('click', () => {
+    initSplitForm();
+    openModal('modalSplit');
+  });
+
+  // close modals
+  $$('[data-close]').forEach(btn => {
+    btn.addEventListener('click', () => closeModal(btn.dataset.close));
+  });
+  // click overlay to close
+  ['modalPerson','modalSplit','modalQuickTx'].forEach(id => {
+    $('#'+id).addEventListener('click', (e) => {
+      if (e.target.id === id) closeModal(id);
+    });
+  });
+
+  // Split rows actions
+  $('#addSplitRow').addEventListener('click', () => {
+    $('#splitTable').appendChild(buildSplitRow());
+    updateSplitTotal();
+  });
+  $('#add3Rows').addEventListener('click', () => {
+    const table = $('#splitTable');
+    table.appendChild(buildSplitRow());
+    table.appendChild(buildSplitRow());
+    table.appendChild(buildSplitRow());
+    updateSplitTotal();
+  });
+
+  $('#saveSplit').addEventListener('click', () => {
+    const title = ($('#splitTitle').value || '').trim() || '分帳';
+    const dateISO = $('#splitDate').value || todayISO();
+    const note = ($('#splitNote').value || '').trim();
+
+    const rows = $$('#splitTable .splitRow');
+    if (rows.length === 0) return toast('至少要一列分帳 (；´д｀)');
+
+    const members = [];
+    for (const r of rows){
+      const name = (r.querySelector('.splitName').value || '').trim();
+      const amtStr = r.querySelector('.splitAmt').value;
+      const amt = parseToCents(amtStr);
+      if (!name && (amtStr || '').trim()) return toast('有人金額有填，但人名空了 (இ﹏இ)');
+      if (name && amt === null) return toast(`「${name}」金額格式不對（最多兩位小數）`);
+      if (name && amt !== null){
+        if (amt <= 0) return toast(`「${name}」金額要 > 0`);
+        const c = ensureContactByName(name);
+        members.push({ personId: c.id, amountCents: amt });
+      }
+    }
+
+    if (members.length === 0) return toast('你還沒填任何有效的分帳列 (・_・;)');
+
+    // Create group
+    const g = upsertGroup({ title, dateISO, note, members });
+
+    // Create transactions as lend only: they owe you
+    for (const m of members){
+      addTransaction({
+        personId: m.personId,
+        type: 'lend',
+        amountCents: m.amountCents,
+        dateISO,
+        note: note ? `${title}｜${note}` : title,
+        groupId: g.id
+      });
+    }
+
+    closeModal('modalSplit');
+    toast('分帳已新增 ✅');
+    renderAll();
+  });
+
+  // Ledger controls
+  $('#btnBack').addEventListener('click', openDashboard);
+
+  $('#btnQuickLend').addEventListener('click', ()=> openQuickTx({personId: currentPersonId, type:'lend'}));
+  $('#btnQuickBorrow').addEventListener('click', ()=> openQuickTx({personId: currentPersonId, type:'borrow'}));
+  $('#btnQuickRepayToMe').addEventListener('click', ()=> openQuickTx({personId: currentPersonId, type:'repay_to_me'}));
+  $('#btnQuickRepayByMe').addEventListener('click', ()=> openQuickTx({personId: currentPersonId, type:'repay_by_me'}));
+
+  $('#saveQuickTx').addEventListener('click', () => {
+    const personId = $('#quickPerson').value;
+    if (!personId) return toast('請先新增人 (・ω・)');
+    const type = $('#quickType').value;
+    const dateISO = $('#quickDate').value || todayISO();
+    const amountCents = parseToCents($('#quickAmount').value);
+    const note = ($('#quickNote').value || '').trim();
+
+    if (amountCents === null) return toast('金額格式不對（最多兩位小數）');
+    if (amountCents <= 0) return toast('金額要 > 0');
+    addTransaction({ personId, type, amountCents, dateISO, note });
+
+    closeModal('modalQuickTx');
+    toast('已新增紀錄 ✨');
+    if (currentView === 'ledger') renderAll();
+    else renderAll();
+  });
+
+  // Reset
+  $('#btnReset').addEventListener('click', () => {
+    if (!confirm('確定要清空所有資料嗎？（不可復原）')) return;
+    localStorage.removeItem(KEY);
+    state = load();
+    toast('已重置');
+    openDashboard();
+  });
+
+  // initial
+  $('#splitDate').value = todayISO();
+  $('#quickDate').value = todayISO();
+  renderAll();
+
+  // Make dashboard list clickable even after data changes
+})();
+</script>
+</body>
+</html>
